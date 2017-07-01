@@ -29,7 +29,7 @@ We model two actuators to drive the car around the track:
 * Steering adjustment (-1 to 1), _delta_, varying +/- 25 degrees
 * Throttle adjustment (-1 to 1), _a_, varying from full power reverse to full power forward
 
-### Cost Function Parameters
+## Cost Function Parameters
 The cost of a trajectory of length N is computed as follows
 ```
 	cost = sum_over_time(
@@ -47,7 +47,7 @@ N is the number of timesteps in the horizon. dt is how much time elapses between
 The values are `N=12` and `dt=0.05`. 
 
 
-### Latency
+## Latency
 In order to deal with Latency, we forced to optimiser to be static for the begining timepsteps, that is at timep step 1 and time step. Note that the `100ms = 2*dt` latency imply that actuations are frozen to the value of the previous values and only optimise after 0.1 second.
 
 ```  
