@@ -41,22 +41,6 @@ double polyeval(Eigen::VectorXd coeffs, double x) {
   return result;
 }
 
-void transform( vector<double> &ptsx,  vector<double> &ptsy, double px, double py, double psi){
-  /*
-  Transform waypoint to car's coordinate system
-  https://en.wikipedia.org/wiki/Rotation_matrix
-  */
-
-  for (int i = 0; i < ptsx.size(); i++ )
-  {
-    double dist_x = ptsx[i]-px;
-    double dist_y = ptsy[i]-py;
-    ptsx[i] = dist_x *cos(psi)+dist_y*sin(psi);
-    ptsy[i] = -dist_x *sin(psi)+dist_y*cos(psi);
-  }
-
-}
-
 // Fit a polynomial.
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
@@ -154,19 +138,19 @@ int main() {
           double epsi = - atan(coeffs[1]);
 
           Eigen::VectorXd state(6);
-          // Initial state of px, py ,psi is 0;
-          // Using the state after 100ms to handle 100ms latency: px = px + v * 0.1 (s)
           double latency = 0.1;
-          double Lf = 2.67;
-          state << v * 0.1 , 0, 0, v, cte, epsi;
+          state << 0, 0, 0, v, cte, epsi;
 
 
           auto vars = mpc.Solve(state, coeffs, mpc_x_vals, mpc_y_vals);
-          steer_value = - vars[0];
+          steer_value = vars[0];
           throttle_value = vars[1];
 
+          mpc.delta_prev = steer_value;
+          mpc.a_prev = throttle_value;
+
           json msgJson;
-          msgJson["steering_angle"] = steer_value;
+          msgJson["steering_angle"] = -steer_value/0.436332;
           msgJson["throttle"] = throttle_value;
 
 

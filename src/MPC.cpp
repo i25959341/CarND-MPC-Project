@@ -6,8 +6,9 @@
 using CppAD::AD;
 
 // Set the timestep length and duration
-size_t N = 15;
+size_t N = 12;
 double dt = 0.05;
+const int latency_ind = 2;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -61,12 +62,12 @@ class FG_eval {
       // Minimize the use of actuators.
       for (int i = 0; i < N - 1; i++) {
           fg[0] += CppAD::pow(vars[delta_start + i], 2);
-          fg[0] += CppAD::pow(vars[a_start + i], 2);
+          fg[0] += 10 * CppAD::pow(vars[a_start + i], 2);
       }
 
       // Minimize the value gap between sequential actuations.
       for (int i = 0; i < N - 2; i++) {
-          fg[0] += 500 * CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
+          fg[0] += 600 * CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
           fg[0] += 50 * CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
       }
 
@@ -99,12 +100,10 @@ class FG_eval {
           AD<double> delta0 = vars[delta_start + i];
           AD<double> a0 = vars[a_start + i];
 
-          AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * pow(x0, 2) + coeffs[3] * pow(x0, 3);
-          AD<double> psides0 = CppAD::atan(coeffs[1] + coeffs[2] * 2 * x0 + coeffs[3] * 3 * pow(x0, 2));
+          AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2]*x0*x0 + coeffs[3]*x0*x0*x0;
+          AD<double> psides0 = CppAD::atan(coeffs[1]+2*coeffs[2]*x0 + 3 * coeffs[3]*x0*x0);
 
-          // Here's `x` to get you started.
-          // The idea here is to constraint this value to be 0.
-          //
+
           // Recall the equations for the model:
           // x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
           // y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
@@ -181,9 +180,21 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, vector<
         vars_upperbound[i] = 0.436332;
     }
 
+    // constrain delta to be the previous control for the latency time
+    for (int i = delta_start; i < delta_start + latency_ind; i++) {
+        vars_lowerbound[i] = delta_prev;
+        vars_upperbound[i] = delta_prev;
+    }
+
     for (int i = a_start; i < n_vars; i++) {
         vars_lowerbound[i] = -1.0;
         vars_upperbound[i] = 1.0;
+    }
+
+    // constrain a to be the previous control for the latency time
+    for (int i = a_start; i < a_start+latency_ind; i++) {
+        vars_lowerbound[i] = a_prev;
+        vars_upperbound[i] = a_prev;
     }
 
   // Lower and upper limits for the constraints
@@ -256,5 +267,5 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, vector<
   //
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
   // creates a 2 element double vector.
-    return {solution.x[delta_start],   solution.x[a_start]};
+    return {solution.x[delta_start+latency_ind],   solution.x[a_start+latency_ind]};
 }
