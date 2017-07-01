@@ -43,8 +43,8 @@ The cost of a trajectory of length N is computed as follows
 	) 
  ```
 ## Timestep length & duration
-N is the number of timesteps in the horizon. dt is how much time elapses between actuations. And T is the product of two variables, N and dt.
-The values are `N=12` and `dt=0.05`. 
+N is the number of timesteps in the horizon. dt is how much time elapses between actuations. And T is the product of two variables, N and dt. As dt is smaller, the actuations get more accurate but computationally expensive. As N is larger, it means that the optimiser takes event further down in the horizon with better control, but as the actuation model is not very accurate, there is not much point forecasting a long horizon.
+The values that provided the best results are are `N=12` and `dt=0.05`. 
 
 
 ## Latency
