@@ -42,3 +42,25 @@ The cost of a trajectory of length N is computed as follows
               + [a(i+1)-a(i)]  // // smooth actuation
 	) 
  ```
+## Timestep length & duration
+N is the number of timesteps in the horizon. dt is how much time elapses between actuations. And T is the product of two variables, N and dt.
+The values are `N=12` and `dt=0.05`. 
+
+
+### Latency
+In order to deal with Latency, we forced to optimiser to be static for the begining timepsteps, that is at timep step 1 and time step. Note that the `100ms = 2*dt` latency imply that actuations are frozen to the value of the previous values and only optimise after 0.1 second.
+
+```  
+  // constrain delta to be the previous control for the latency time
+  for (int i = delta_start; i < delta_start + latency_ind; i++) {
+    vars_lowerbound[i] = delta_prev;
+    vars_upperbound[i] = delta_prev;
+  }
+ ... 
+  
+  // constrain a to be the previous control for the latency time 
+  for (int i = a_start; i < a_start+latency_ind; i++) {
+    vars_lowerbound[i] = a_prev;
+    vars_upperbound[i] = a_prev;
+  }
+```
